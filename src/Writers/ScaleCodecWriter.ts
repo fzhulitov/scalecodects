@@ -1,12 +1,14 @@
 import {IDisposable} from "./IScaleWriter";
 import {ArrayBufferWritableSyncStream} from "#stream";
-import {CompactMode, CompactModeExtentions} from "#CompactMode";
+import {CompactMode, CompactModeExtentions, NegativValueRestricted} from "#CompactMode";
 import {hexToBuffer} from "../../tests/hexUtil";
 
+export class ToBigForBigint extends Error {}
 export class ToBigForUint64 extends Error {}
 export class ToBigForUint32 extends Error {}
 export class ToBigForUint16 extends Error {}
 export class ToBigForUint8 extends Error {}
+
 
 
 export class ScaleCodecWriter implements IDisposable {
@@ -22,7 +24,7 @@ export class ScaleCodecWriter implements IDisposable {
     private GetLastByte(value: number | bigint): number {
         if (typeof value == "number") return value % 256;
         let result = value % 256n;
-        return parseInt(result.toString(10), 10);
+        return parseInt(result.toString(2), 2);
     }
 
     public WriteRawBytes(data: Uint8Array): void {
@@ -52,6 +54,10 @@ export class ScaleCodecWriter implements IDisposable {
     }
 
     public WriteBigInt(value: bigint): void {
+        if (value <0n) throw new NegativValueRestricted("Negative Value isn't allowed to Unsigned");
+        if (value > 2n**536n-1n) {
+            throw new ToBigForBigint("The number is more than 2^536-1");
+        }
         let mode = CompactModeExtentions.GetCompactModeBig(value);
         let datastr = value.toString(16);
 
@@ -73,12 +79,15 @@ export class ScaleCodecWriter implements IDisposable {
     }
 
     public WriteByte(b: number): void {
+        if (b <0) throw new NegativValueRestricted("Negative Value isn't allowed to Unsigned");
+        if (b>255) throw new ToBigForUint8("to big for byte");
         this._output.writeByte(b);
     }
 
     public WriteUint16(value: number): void {
-        if (value > 2**16) {
-            throw new ToBigForUint16("The number id more than 2^16");
+        if (value <0) throw new NegativValueRestricted("Negative Value isn't allowed to Unsigned");
+        if (value > 2**16-1) {
+            throw new ToBigForUint16("The number is more than 2^16-1");
         }
         this._tempBuffer[0] = (value & 0xff);
         this._tempBuffer[1] = ((value >> 8) & 0xff);
@@ -86,8 +95,9 @@ export class ScaleCodecWriter implements IDisposable {
     }
 
     public WriteUint32(value: number): void {
-        if (value > 2**32) {
-            throw new ToBigForUint32("The number id more than 2^32");
+        if (value <0) throw new NegativValueRestricted("Negative Value isn't allowed to Unsigned");
+        if (value > 2**32-1) {
+            throw new ToBigForUint32("The number is more than 2^32-1");
         }
         this._tempBuffer[0] = (value & 0xff);
         this._tempBuffer[1] = ((value >> 8) & 0xff);
@@ -97,8 +107,9 @@ export class ScaleCodecWriter implements IDisposable {
     }
 
     public WriteUint64(value: bigint): void {
-        if (value > 2n**64n) {
-            throw new ToBigForUint64("The number id more than 2^64");
+        if (value <0n) throw new NegativValueRestricted("Negative Value isn't allowed to Unsigned");
+        if (value > 2n**64n-1n) {
+            throw new ToBigForUint64("The number is more than 2^64-1");
         }
         this._tempBuffer[0] = (this.GetLastByte(value) & 0xff);
         this._tempBuffer[1] = (this.GetLastByte(value >> 8n) & 0xff);

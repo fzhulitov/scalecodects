@@ -53,7 +53,8 @@ export class ScaleCodecReader {
         result += this.ReadByte();
         result += (this.ReadByte() << 8);
         result += (this.ReadByte() << (2 * 8));
-        result += (this.ReadByte() << (3 * 8));
+        let temp = this.ReadByte();
+        result += (temp * (2**24));
         return result;
     }
     public ReadNullableUint32(): number | null {
@@ -66,13 +67,13 @@ export class ScaleCodecReader {
     public ReadUint64(): bigint {
         let result = 0n;
         result += BigInt(this.ReadByte());
-        result += BigInt((this.ReadByte() << 8));
-        result += BigInt((this.ReadByte() << (2 * 8)));
-        result += BigInt((this.ReadByte() << (3 * 8)));
-        result += BigInt((this.ReadByte() << (4 * 8)));
-        result += BigInt((this.ReadByte() << (5 * 8)));
-        result += BigInt((this.ReadByte() << (6 * 8)));
-        result += BigInt((this.ReadByte() << (7 * 8)));
+        result += BigInt((this.ReadByte()) * (2** 8));
+        result += BigInt((this.ReadByte()) * (2**(2 * 8)));
+        result += BigInt((this.ReadByte()) *(2** (3 * 8)));
+        result += BigInt((this.ReadByte()) * (2**(4 * 8)));
+        result += BigInt((this.ReadByte()) * (2**(5 * 8)));
+        result += BigInt((this.ReadByte())* (2**(6 * 8)));
+        result += BigInt((this.ReadByte())* (2** (7 * 8)));
         return result;
     }
     

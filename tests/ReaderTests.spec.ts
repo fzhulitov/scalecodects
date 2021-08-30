@@ -3,7 +3,6 @@ import {ArrayReadableSyncStream, EndOfStreamError} from "#stream";
 import {hexToBuffer} from "./hexUtil";
 import {CompactMode} from "#CompactMode";
 
-
 it ("Should Read Byte", ()=>{
     let codec = new ScaleCodecReader(new ArrayReadableSyncStream(hexToBuffer("45")));
     expect(codec.ReadByte()).toEqual(69);
@@ -76,10 +75,14 @@ it ("Should read string",()=>{
 })
 
 it ("Should read byte array", ()=>{
-/*    let codec = new ScaleCodecReader(new ArrayReadableSyncStream(hexToBuffer("00")));
-    expect(codec.ReadByteArray()).toEqual();
+    let codec = new ScaleCodecReader(new ArrayReadableSyncStream(hexToBuffer(            "a8".concat("00".repeat(42)) )));
+    expect(codec.ReadByteArray()).toEqual(hexToBuffer("00".repeat(42)));
     expect(()=>codec.ReadByte()).toThrowError(EndOfStreamError);
-    
-    something about inline data///
-    */
+})
+
+it ("Should skip some byte ", ()=>{
+    let codec = new ScaleCodecReader(new ArrayReadableSyncStream(hexToBuffer(            "00".repeat(42) )));
+    expect(()=>codec.Skip(43)).toThrowError(EndOfStreamError);
+    expect(()=>codec.Skip(42)).not.toThrowError(EndOfStreamError);
+    expect(()=>codec.ReadByte()).toThrowError(EndOfStreamError);
 })
